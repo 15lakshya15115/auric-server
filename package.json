@@ -1,0 +1,24 @@
+{
+  "name": "auric-server",
+  "version": "1.0.0",
+  "description": "Custom Node.js WhatsApp Drip Automation Server connecting Shopify and WATI for Auric Mills",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "node-cron": "^3.0.3"
+  },
+  "keywords": [
+    "shopify",
+    "wati",
+    "whatsapp",
+    "automation",
+    "auric-mills"
+  ],
+  "author": "Auric Mills",
+  "license": "ISC"
+}

@@ -55,7 +55,7 @@ app.post('/webhooks/shopify/orders-create', async (req, res) => {
     }
 
     // Message 1: Order Received (Instant)
-    const orderTemplate = process.env.TEMPLATE_ORDER_CONFIRMED || 'order_received_new';
+    const orderTemplate = process.env.TEMPLATE_ORDER_CONFIRMED || 'thank_you_new';
     try {
       await sendTemplateMessage({
         phone,

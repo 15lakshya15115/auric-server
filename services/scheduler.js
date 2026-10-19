@@ -37,6 +37,7 @@ async function processPendingMessages() {
         });
 
         db.markJobSent(job.id);
+        db.recordMessageSent(job.orderId, 'milling_started');
         processedCount++;
       } catch (err) {
         console.error(`[Scheduler ERROR] Failed job ${job.id}:`, err.message);

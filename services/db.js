@@ -108,10 +108,50 @@ function getAllJobs(limit = 100) {
   return jobs.slice(-limit).reverse();
 }
 
+const SENT_EVENTS_FILE = path.join(DATA_DIR, 'sent_events.json');
+
+function readSentEvents() {
+  try {
+    if (!fs.existsSync(SENT_EVENTS_FILE)) return {};
+    const raw = fs.readFileSync(SENT_EVENTS_FILE, 'utf-8');
+    return JSON.parse(raw || '{}');
+  } catch (err) {
+    return {};
+  }
+}
+
+function recordMessageSent(orderId, type) {
+  try {
+    const events = readSentEvents();
+    const key = String(orderId);
+    if (!events[key]) events[key] = [];
+    if (!events[key].includes(type)) {
+      events[key].push(type);
+      fs.writeFileSync(SENT_EVENTS_FILE, JSON.stringify(events, null, 2), 'utf-8');
+    }
+  } catch (err) {
+    console.error('[DB] Error recording sent event:', err.message);
+  }
+}
+
+function hasMessageBeenSent(orderId, type) {
+  const events = readSentEvents();
+  const key = String(orderId);
+  return Boolean(events[key] && events[key].includes(type));
+}
+
+function isJobScheduled(orderId, templateName) {
+  const jobs = readJobs();
+  return jobs.some(j => String(j.orderId) === String(orderId) && j.templateName === templateName);
+}
+
 module.exports = {
   addJob,
   getDuePendingJobs,
   markJobSent,
   markJobFailed,
-  getAllJobs
+  getAllJobs,
+  recordMessageSent,
+  hasMessageBeenSent,
+  isJobScheduled
 };

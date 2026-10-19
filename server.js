@@ -37,8 +37,27 @@ app.get('/health', (req, res) => {
 });
 
 // ==========================================
-// 2. Webhook: Order Created (Instant Confirm + 2-Day Milling Drip)
+// 2. Webhook: Order Created (Instant Confirm + Next-Day 11 AM Milling Drip)
 // ==========================================
+
+/**
+ * Calculate Next Calendar Day at 11:00 AM IST
+ * e.g., Order placed Oct 19 at 4:00 PM -> Scheduled for Oct 20 at 11:00 AM IST
+ */
+function getNextDay11AM_IST(orderDate = new Date()) {
+  const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000; // 5 hours 30 mins IST
+  const istTime = new Date(orderDate.getTime() + IST_OFFSET_MS);
+  return Date.UTC(
+    istTime.getUTCFullYear(),
+    istTime.getUTCMonth(),
+    istTime.getUTCDate() + 1, // Next calendar day in IST
+    5,                        // 05:30 AM UTC = 11:00:00 AM IST
+    30,
+    0,
+    0
+  );
+}
+
 app.post('/webhooks/shopify/orders-create', async (req, res) => {
   try {
     const order = req.body;
@@ -70,10 +89,10 @@ app.post('/webhooks/shopify/orders-create', async (req, res) => {
       console.error(`[Webhook] Error sending order confirmation to ${phone}:`, err.message);
     }
 
-    // Message 2: Fresh Milling Started (Scheduled 2 Days = 48 Hours Later)
+    // Message 2: Fresh Milling Started (Scheduled Next Day Morning at 11:00 AM IST)
     const millingTemplate = process.env.TEMPLATE_MILLING_STARTED || 'fresh_milling_started_new';
-    const twoDaysMs = 2 * 24 * 60 * 60 * 1000;
-    const scheduledTime = Date.now() + twoDaysMs;
+    const orderDate = order.created_at ? new Date(order.created_at) : new Date();
+    const scheduledTime = getNextDay11AM_IST(orderDate);
 
     db.addJob({
       orderId: orderNumber,
@@ -84,11 +103,15 @@ app.post('/webhooks/shopify/orders-create', async (req, res) => {
       scheduledAt: scheduledTime
     });
 
+    const scheduledDateIST = new Date(scheduledTime).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+    console.log(`[Shopify Webhook] Milling message scheduled for Order ${orderNumber} at: ${scheduledDateIST} (IST)`);
+
     res.status(200).json({
       status: 'success',
       order: orderNumber,
       instantMessage: 'sent',
-      millingScheduledFor: new Date(scheduledTime).toISOString()
+      millingScheduledFor: new Date(scheduledTime).toISOString(),
+      millingScheduledForIST: scheduledDateIST
     });
   } catch (error) {
     console.error('[Shopify Webhook ERROR orders-create]:', error);

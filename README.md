@@ -6,8 +6,8 @@ Independent Node.js middleware server connecting **Shopify Orders** to **WATI Wh
 
 ## 🌾 The 4-Step Customer WhatsApp Journey
 
-1. **Order Confirmed (Instant):** Sent immediately when an order is created (`order_received_new`).
-2. **Fresh Milling Started (After 2 Days / 48h):** Scheduled in database and sent automatically 48 hours later (`fresh_milling_started_new`).
+1. **Order Confirmed (Instant):** Sent immediately when an order is created (`thank_you_new`).
+2. **Fresh Milling Started (Next Day 11:00 AM IST):** Scheduled in database and sent automatically next calendar morning at 11:00 AM IST (`fresh_milling_started_new`).
 3. **Order Shipped (Instant on Dispatch):** Sent immediately when the order is fulfilled (`order_shipped_new`).
 4. **Order Delivered & Feedback (Instant on Delivery):** Sent when the order is delivered with Google Review link and Order Again link (`feedback_new`).
 

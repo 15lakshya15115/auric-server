@@ -145,6 +145,54 @@ function isJobScheduled(orderId, templateName) {
   return jobs.some(j => String(j.orderId) === String(orderId) && j.templateName === templateName);
 }
 
+// In-memory locks map: key -> timestamp (persists during process lifetime)
+const memoryLocks = new Map();
+
+/**
+ * Atomic deduplication lock
+ * Checks both Order ID and Phone Number.
+ * If either was locked/processed within cooldown window, returns false.
+ * Otherwise locks immediately and returns true.
+ */
+function tryAcquireLock(orderId, type, phone = '', cooldownMs = 15 * 60 * 1000) {
+  const now = Date.now();
+  const orderKey = orderId ? `order_${orderId}_${type}` : null;
+  const phoneKey = phone ? `phone_${phone}_${type}` : null;
+
+  // Check memory locks first
+  if (orderKey && memoryLocks.has(orderKey)) {
+    const ts = memoryLocks.get(orderKey);
+    if (now - ts < cooldownMs) {
+      return false; // Order locked!
+    }
+  }
+
+  if (phoneKey && memoryLocks.has(phoneKey)) {
+    const ts = memoryLocks.get(phoneKey);
+    if (now - ts < cooldownMs) {
+      return false; // Phone locked!
+    }
+  }
+
+  // Check persistent storage
+  if (orderId && hasMessageBeenSent(orderId, type)) {
+    return false;
+  }
+
+  // Set memory locks immediately
+  if (orderKey) memoryLocks.set(orderKey, now);
+  if (phoneKey) memoryLocks.set(phoneKey, now);
+
+  // Clean old locks if map grows too large (> 2000 entries)
+  if (memoryLocks.size > 2000) {
+    for (const [k, v] of memoryLocks.entries()) {
+      if (now - v > cooldownMs) memoryLocks.delete(k);
+    }
+  }
+
+  return true;
+}
+
 module.exports = {
   addJob,
   getDuePendingJobs,
@@ -153,5 +201,7 @@ module.exports = {
   getAllJobs,
   recordMessageSent,
   hasMessageBeenSent,
-  isJobScheduled
+  isJobScheduled,
+  tryAcquireLock
 };
+

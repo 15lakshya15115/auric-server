@@ -58,49 +58,73 @@ function getNextDay11AM_IST(orderDate = new Date()) {
   );
 }
 
+// Circular in-memory log buffer (last 100 entries)
+const recentLogs = [];
+function addLog(msg) {
+  const entry = { time: new Date().toISOString(), message: msg };
+  recentLogs.unshift(entry);
+  if (recentLogs.length > 100) recentLogs.pop();
+  console.log(`[${entry.time}] ${msg}`);
+}
+
 app.post('/webhooks/shopify/orders-create', async (req, res) => {
   try {
     const order = req.body;
-    console.log(`[Shopify Webhook] New Order Received: ${order.name || order.id}`);
-
-    const customerName = order.customer?.first_name || order.shipping_address?.first_name || 'Valued Customer';
+    const orderNumber = order.name || `#${order.order_number || order.id || ''}`;
     const rawPhone = order.phone || order.customer?.phone || order.shipping_address?.phone || '';
     const phone = normalizePhoneNumber(rawPhone);
-    const orderNumber = order.name || `#${order.order_number || order.id}`;
+    const customerName = order.customer?.first_name || order.shipping_address?.first_name || 'Valued Customer';
+
+    addLog(`[Shopify Webhook] New Order Received: ${orderNumber} (Phone: ${phone})`);
 
     if (!phone) {
-      console.warn(`[Shopify Webhook] Order ${orderNumber} has no phone. Skipping.`);
+      addLog(`[Shopify Webhook] Order ${orderNumber} has no phone. Skipping.`);
       return res.status(200).json({ status: 'ignored', reason: 'No phone number found' });
     }
 
-    // Message 1: Order Received (Instant - Deduplicated)
-    const orderTemplate = process.env.TEMPLATE_ORDER_CONFIRMED || 'thank_you_new';
-    if (db.hasMessageBeenSent(orderNumber, 'order_confirmed')) {
-      console.log(`[Shopify Webhook] Confirmation already sent for ${orderNumber}. Skipping duplicate.`);
-    } else {
-      try {
-        await sendTemplateMessage({
-          phone,
-          templateName: orderTemplate,
-          parameters: [
-            { name: 'customer_name', value: customerName },
-            { name: '1', value: customerName }
-          ],
-          broadcastName: `Order_${orderNumber}`
-        });
-        db.recordMessageSent(orderNumber, 'order_confirmed');
-      } catch (err) {
-        console.error(`[Webhook] Error sending order confirmation to ${phone}:`, err.message);
-      }
+    // 1. ATOMIC LOCK CHECK FOR ORDER CONFIRMATION
+    // Blocks any duplicate webhook arriving concurrently (within 15 minutes) for this order OR this phone!
+    const canSendConfirmation = db.tryAcquireLock(orderNumber, 'order_confirmed', phone);
+
+    if (!canSendConfirmation) {
+      addLog(`[Shopify Webhook DEDUP] Order confirmation for ${orderNumber} / ${phone} already locked/sent. Skipping duplicate.`);
+      return res.status(200).json({ status: 'ignored', reason: 'Duplicate order confirmation' });
     }
 
-    // Message 2: Fresh Milling Started (Scheduled Next Day Morning at 11:00 AM IST - Deduplicated)
+    // Synchronously record as sent in DB immediately
+    db.recordMessageSent(orderNumber, 'order_confirmed');
+
+    // RESPOND 200 OK TO SHOPIFY IMMEDIATELY (<50ms)
+    // This is CRITICAL: Prevents Shopify from timing out (5s limit) and sending retry webhooks!
+    res.status(200).json({
+      status: 'accepted',
+      order: orderNumber
+    });
+
+    // 2. SEND ORDER CONFIRMATION (Background)
+    const orderTemplate = process.env.TEMPLATE_ORDER_CONFIRMED || 'thank_you_new';
+    try {
+      await sendTemplateMessage({
+        phone,
+        templateName: orderTemplate,
+        parameters: [
+          { name: 'customer_name', value: customerName },
+          { name: '1', value: customerName }
+        ],
+        broadcastName: `Order_${orderNumber}`
+      });
+      addLog(`[CONFIRMED] Successfully sent "${orderTemplate}" to ${phone} for ${orderNumber}`);
+    } catch (err) {
+      addLog(`[CONFIRM ERROR] Failed to send "${orderTemplate}" to ${phone}: ${err.message}`);
+    }
+
+    // 3. SCHEDULE MILLING MESSAGE (Scheduled Next Day Morning at 11:00 AM IST)
     const millingTemplate = process.env.TEMPLATE_MILLING_STARTED || 'fresh_milling_started_new';
     const orderDate = order.created_at ? new Date(order.created_at) : new Date();
     const scheduledTime = getNextDay11AM_IST(orderDate);
 
     if (db.isJobScheduled(orderNumber, millingTemplate) || db.hasMessageBeenSent(orderNumber, 'milling_started')) {
-      console.log(`[Shopify Webhook] Milling job already scheduled/sent for ${orderNumber}. Skipping duplicate.`);
+      addLog(`[Shopify Webhook] Milling job already scheduled/sent for ${orderNumber}. Skipping duplicate.`);
     } else {
       db.addJob({
         orderId: orderNumber,
@@ -110,19 +134,14 @@ app.post('/webhooks/shopify/orders-create', async (req, res) => {
         parameters: [],
         scheduledAt: scheduledTime
       });
-
       const scheduledDateIST = new Date(scheduledTime).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
-      console.log(`[Shopify Webhook] Milling message scheduled for Order ${orderNumber} at: ${scheduledDateIST} (IST)`);
+      addLog(`[SCHEDULED] Milling message scheduled for Order ${orderNumber} at: ${scheduledDateIST} (IST)`);
     }
-
-    res.status(200).json({
-      status: 'success',
-      order: orderNumber,
-      millingScheduledFor: new Date(scheduledTime).toISOString()
-    });
   } catch (error) {
-    console.error('[Shopify Webhook ERROR orders-create]:', error);
-    res.status(500).json({ error: error.message });
+    addLog(`[Shopify Webhook ERROR orders-create]: ${error.message}`);
+    if (!res.headersSent) {
+      res.status(500).json({ error: error.message });
+    }
   }
 });
 
@@ -132,37 +151,46 @@ app.post('/webhooks/shopify/orders-create', async (req, res) => {
 app.post('/webhooks/shopify/orders-fulfilled', async (req, res) => {
   try {
     const payload = req.body;
-    console.log(`[Shopify Webhook] Order Fulfilled: ${payload.name || payload.id}`);
-
     const order = payload.order || payload;
     const customerName = order.customer?.first_name || order.shipping_address?.first_name || 'Valued Customer';
     const rawPhone = order.phone || order.customer?.phone || order.shipping_address?.phone || '';
     const phone = normalizePhoneNumber(rawPhone);
     const orderNumber = order.name || `#${order.order_number || order.id || ''}`;
 
+    addLog(`[Shopify Webhook] Order Fulfilled: ${orderNumber} (Phone: ${phone})`);
+
     if (!phone) {
       return res.status(200).json({ status: 'ignored', reason: 'No phone' });
     }
 
-    // Message 3: Order Shipped (Deduplicated)
-    if (db.hasMessageBeenSent(orderNumber, 'order_shipped')) {
-      console.log(`[Shopify Webhook] Shipping message already sent for ${orderNumber}. Skipping duplicate.`);
-      return res.status(200).json({ status: 'ignored', reason: 'Already sent' });
+    // Atomic lock check
+    const canSendShipped = db.tryAcquireLock(orderNumber, 'order_shipped', phone);
+    if (!canSendShipped) {
+      addLog(`[Shopify Webhook DEDUP] Shipping message for ${orderNumber} / ${phone} already locked/sent. Skipping duplicate.`);
+      return res.status(200).json({ status: 'ignored', reason: 'Duplicate shipping message' });
     }
 
-    const shippedTemplate = process.env.TEMPLATE_ORDER_SHIPPED || 'order_shipped_new';
-    await sendTemplateMessage({
-      phone,
-      templateName: shippedTemplate,
-      parameters: [],
-      broadcastName: `Shipped_${orderNumber}`
-    });
     db.recordMessageSent(orderNumber, 'order_shipped');
 
-    res.status(200).json({ status: 'success', order: orderNumber, message: 'shipped_sent' });
+    res.status(200).json({ status: 'accepted', order: orderNumber });
+
+    const shippedTemplate = process.env.TEMPLATE_ORDER_SHIPPED || 'order_shipped_new';
+    try {
+      await sendTemplateMessage({
+        phone,
+        templateName: shippedTemplate,
+        parameters: [],
+        broadcastName: `Shipped_${orderNumber}`
+      });
+      addLog(`[SHIPPED] Successfully sent "${shippedTemplate}" to ${phone} for ${orderNumber}`);
+    } catch (err) {
+      addLog(`[SHIPPED ERROR] Failed to send "${shippedTemplate}" to ${phone}: ${err.message}`);
+    }
   } catch (error) {
-    console.error('[Shopify Webhook ERROR orders-fulfilled]:', error);
-    res.status(500).json({ error: error.message });
+    addLog(`[Shopify Webhook ERROR orders-fulfilled]: ${error.message}`);
+    if (!res.headersSent) {
+      res.status(500).json({ error: error.message });
+    }
   }
 });
 
@@ -172,47 +200,55 @@ app.post('/webhooks/shopify/orders-fulfilled', async (req, res) => {
 app.post('/webhooks/shopify/orders-delivered', async (req, res) => {
   try {
     const order = req.body;
-    console.log(`[Delivery Webhook] Order Updated/Delivered check: ${order.name || order.id}`);
-
     const customerName = order.customer?.first_name || order.shipping_address?.first_name || 'Valued Customer';
     const rawPhone = order.phone || order.customer?.phone || order.shipping_address?.phone || '';
     const phone = normalizePhoneNumber(rawPhone);
     const orderNumber = order.name || `#${order.order_number || order.id || ''}`;
+
+    addLog(`[Delivery Webhook] Order Updated/Delivered check: ${orderNumber} (Phone: ${phone})`);
 
     if (!phone) {
       return res.status(200).json({ status: 'ignored', reason: 'No phone' });
     }
 
     // CRITICAL: Strict Delivery Verification
-    // Do NOT send feedback unless the fulfillment shipment_status is genuinely 'delivered'
     const fulfillments = order.fulfillments || [];
     const isDelivered = fulfillments.some(f => f.shipment_status === 'delivered') ||
                         (order.tags && order.tags.toLowerCase().includes('delivered'));
 
     if (!isDelivered) {
-      console.log(`[Delivery Webhook] Order ${orderNumber} is NOT delivered yet. Skipping feedback message.`);
+      addLog(`[Delivery Webhook] Order ${orderNumber} is NOT delivered yet. Skipping feedback message.`);
       return res.status(200).json({ status: 'ignored', reason: 'Order is not marked delivered yet' });
     }
 
-    // Message 4: Feedback & Google Review (Deduplicated)
-    if (db.hasMessageBeenSent(orderNumber, 'order_feedback')) {
-      console.log(`[Delivery Webhook] Feedback already sent for ${orderNumber}. Skipping duplicate.`);
-      return res.status(200).json({ status: 'ignored', reason: 'Already sent' });
+    // Atomic lock check
+    const canSendFeedback = db.tryAcquireLock(orderNumber, 'order_feedback', phone);
+    if (!canSendFeedback) {
+      addLog(`[Delivery Webhook DEDUP] Feedback for ${orderNumber} / ${phone} already locked/sent. Skipping duplicate.`);
+      return res.status(200).json({ status: 'ignored', reason: 'Duplicate feedback message' });
     }
 
-    const feedbackTemplate = process.env.TEMPLATE_DELIVERY_FEEDBACK || 'feedback_new';
-    await sendTemplateMessage({
-      phone,
-      templateName: feedbackTemplate,
-      parameters: [],
-      broadcastName: `Feedback_${orderNumber}`
-    });
     db.recordMessageSent(orderNumber, 'order_feedback');
 
-    res.status(200).json({ status: 'success', order: orderNumber, message: 'feedback_sent' });
+    res.status(200).json({ status: 'accepted', order: orderNumber });
+
+    const feedbackTemplate = process.env.TEMPLATE_DELIVERY_FEEDBACK || 'feedback_new';
+    try {
+      await sendTemplateMessage({
+        phone,
+        templateName: feedbackTemplate,
+        parameters: [],
+        broadcastName: `Feedback_${orderNumber}`
+      });
+      addLog(`[FEEDBACK] Successfully sent "${feedbackTemplate}" to ${phone} for ${orderNumber}`);
+    } catch (err) {
+      addLog(`[FEEDBACK ERROR] Failed to send "${feedbackTemplate}" to ${phone}: ${err.message}`);
+    }
   } catch (error) {
-    console.error('[Delivery Webhook ERROR]:', error);
-    res.status(500).json({ error: error.message });
+    addLog(`[Delivery Webhook ERROR]: ${error.message}`);
+    if (!res.headersSent) {
+      res.status(500).json({ error: error.message });
+    }
   }
 });
 
@@ -234,6 +270,13 @@ app.get('/cron/process', async (req, res) => {
 app.get('/admin/jobs', (req, res) => {
   const jobs = db.getAllJobs();
   res.json({ total: jobs.length, jobs });
+});
+
+// ==========================================
+// 6b. Live Logs Endpoint
+// ==========================================
+app.get('/admin/logs', (req, res) => {
+  res.json({ total: recentLogs.length, logs: recentLogs });
 });
 
 // ==========================================

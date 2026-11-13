@@ -42,9 +42,9 @@
 
     /* Header */
     header {
-      background: linear-gradient(135deg, #221509 0%, #3d240e 100%);
+      background: linear-gradient(135deg, #221509 0%, #341c0b 100%);
       color: #fff;
-      padding: 18px 28px;
+      padding: 16px 28px;
       box-shadow: 0 4px 20px rgba(34, 21, 9, 0.2);
       position: sticky;
       top: 0;
@@ -64,32 +64,41 @@
     .brand {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 16px;
     }
 
-    .brand-icon {
-      width: 44px;
-      height: 44px;
-      background: linear-gradient(135deg, #c1812b 0%, #e5a44a 100%);
-      border-radius: 12px;
+    .brand-logo-badge {
+      background: #ffffff;
+      padding: 6px 14px;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
-      box-shadow: 0 4px 12px rgba(193, 129, 43, 0.4);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .brand-logo-img {
+      height: 32px;
+      width: auto;
+      display: block;
+      object-fit: contain;
+    }
+
+    .brand-info {
+      display: flex;
+      flex-direction: column;
     }
 
     .brand-title {
-      font-family: 'Lora', serif;
-      font-size: 20px;
-      font-weight: 600;
+      font-size: 17px;
+      font-weight: 700;
       color: #ffffff;
       letter-spacing: -0.2px;
     }
 
     .brand-subtitle {
       font-size: 12px;
-      color: #e2d3c1;
+      color: #d1bba4;
       font-weight: 500;
       display: flex;
       align-items: center;
@@ -129,6 +138,12 @@
       cursor: pointer;
       transition: all 0.2s ease;
       text-decoration: none;
+    }
+
+    .btn svg {
+      width: 16px;
+      height: 16px;
+      stroke-width: 2.2;
     }
 
     .btn-primary {
@@ -233,7 +248,7 @@
     }
 
     .stat-title {
-      font-size: 13px;
+      font-size: 12.5px;
       font-weight: 600;
       color: var(--text-muted);
       text-transform: uppercase;
@@ -247,7 +262,12 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 18px;
+    }
+
+    .stat-icon svg {
+      width: 18px;
+      height: 18px;
+      stroke-width: 2.2;
     }
 
     .stat-value {
@@ -279,6 +299,8 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 8px;
     }
 
     .automations-title {
@@ -288,6 +310,13 @@
       display: flex;
       align-items: center;
       gap: 8px;
+    }
+
+    .automations-title svg {
+      width: 18px;
+      height: 18px;
+      color: var(--primary);
+      stroke-width: 2.2;
     }
 
     .toggles-grid {
@@ -313,11 +342,24 @@
     .toggle-label-wrap {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
     }
 
-    .toggle-emoji {
-      font-size: 20px;
+    .toggle-icon-wrap {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #334155;
+    }
+
+    .toggle-icon-wrap svg {
+      width: 16px;
+      height: 16px;
+      stroke-width: 2.2;
     }
 
     .toggle-title {
@@ -423,13 +465,14 @@
       border-color: var(--primary);
     }
 
-    .search-icon {
+    .search-icon-svg {
       position: absolute;
       left: 12px;
       top: 50%;
       transform: translateY(-50%);
       color: var(--text-muted);
-      font-size: 14px;
+      width: 15px;
+      height: 15px;
     }
 
     /* Table */
@@ -492,11 +535,15 @@
       align-items: center;
       justify-content: center;
       text-decoration: none;
-      font-size: 16px;
       transition: transform 0.2s;
     }
+    .wa-link svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
     .wa-link:hover {
-      transform: scale(1.2);
+      transform: scale(1.15);
     }
 
     /* Status Badges */
@@ -508,7 +555,12 @@
       border-radius: 20px;
       font-size: 12px;
       font-weight: 700;
-      text-transform: capitalize;
+    }
+
+    .status-badge svg {
+      width: 13px;
+      height: 13px;
+      stroke-width: 2.4;
     }
 
     .status-delivered {
@@ -546,22 +598,38 @@
       font-size: 11.5px;
       color: #b91c1c;
       margin-top: 4px;
-      font-weight: 500;
+      font-weight: 600;
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 5px;
+    }
+    .reason-box svg {
+      width: 13px;
+      height: 13px;
+      flex-shrink: 0;
+      stroke-width: 2.2;
     }
 
     .stage-badge {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 6px;
       font-size: 12.5px;
       font-weight: 600;
       color: #334155;
     }
 
+    .stage-badge svg {
+      width: 14px;
+      height: 14px;
+      color: var(--primary);
+      stroke-width: 2;
+    }
+
     .btn-table-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
       padding: 5px 12px;
       border-radius: 6px;
       font-size: 12px;
@@ -571,6 +639,12 @@
       color: var(--text-main);
       cursor: pointer;
       transition: all 0.2s;
+      text-decoration: none;
+    }
+    .btn-table-action svg {
+      width: 12px;
+      height: 12px;
+      stroke-width: 2.2;
     }
     .btn-table-action:hover {
       background: #f1f5f9;
@@ -583,7 +657,21 @@
       text-align: center;
       color: var(--text-muted);
     }
-    .empty-icon { font-size: 40px; margin-bottom: 12px; }
+    .empty-icon-wrap {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: #f1f5f9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 12px;
+      color: var(--text-muted);
+    }
+    .empty-icon-wrap svg {
+      width: 24px;
+      height: 24px;
+    }
 
     /* Modal */
     .modal-overlay {
@@ -623,9 +711,22 @@
       align-items: center;
       margin-bottom: 20px;
     }
-    .modal-title { font-size: 18px; font-weight: 700; color: var(--text-main); }
+    .modal-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .modal-title svg {
+      width: 18px;
+      height: 18px;
+      color: var(--primary);
+    }
     .modal-close {
-      background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-muted);
+      background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-muted);
+      line-height: 1;
     }
 
     .form-group {
@@ -685,9 +786,9 @@
   <!-- Auth Gate -->
   <div class="auth-banner" id="AuthBanner">
     <div class="auth-card">
-      <div style="font-size: 40px; margin-bottom: 10px;">🌾</div>
-      <h2 style="font-family: 'Lora', serif; font-size: 22px; margin-bottom: 6px; color: #3b2005;">Auric Mills Admin</h2>
-      <p style="font-size: 13px; color: #64748b; margin-bottom: 20px;">Enter Dashboard PIN to access WhatsApp logs</p>
+      <img src="/logo.png" alt="Auric Mills" style="height: 48px; width: auto; margin: 0 auto 16px; display: block; object-fit: contain;">
+      <h2 style="font-size: 18px; font-weight: 700; margin-bottom: 6px; color: #3b2005;">WhatsApp Automation Admin</h2>
+      <p style="font-size: 13px; color: #64748b; margin-bottom: 20px;">Enter Dashboard PIN to access logs & reports</p>
       <input type="password" id="PinInput" class="form-input" placeholder="Enter PIN..." style="text-align: center; font-size: 18px; letter-spacing: 4px; margin-bottom: 14px;">
       <button class="btn btn-primary" style="width: 100%; justify-content: center;" onclick="verifyPin()">Unlock Dashboard</button>
       <p id="PinError" style="color: #ef4444; font-size: 12px; margin-top: 10px; display: none;">Invalid PIN. Please try again.</p>
@@ -698,25 +799,30 @@
   <header>
     <div class="header-inner">
       <div class="brand">
-        <div class="brand-icon">🌾</div>
-        <div>
-          <div class="brand-title">Auric Mills</div>
+        <div class="brand-logo-badge">
+          <img src="/logo.png" alt="Auric Mills" class="brand-logo-img">
+        </div>
+        <div class="brand-info">
+          <div class="brand-title">WhatsApp Automation Center</div>
           <div class="brand-subtitle">
             <span class="pulse-dot"></span>
-            WhatsApp Automation Center
+            Live Production Dashboard
           </div>
         </div>
       </div>
 
       <div class="header-actions">
         <button class="btn btn-secondary" onclick="openTestModal()">
-          <span>⚡</span> Send Test
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          Send Test
         </button>
         <button class="btn btn-secondary" onclick="downloadCsv()">
-          <span>📥</span> Export CSV
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Export CSV
         </button>
         <button class="btn btn-primary" onclick="loadDashboard()">
-          <span>🔄</span> Refresh
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+          Refresh
         </button>
       </div>
     </div>
@@ -727,8 +833,8 @@
     <!-- Webhook Pulse Banner -->
     <div class="pulse-bar">
       <div class="pulse-status">
-        <span class="badge-live">🟢 LIVE & ACTIVE</span>
-        <span id="ShopifyPulseText">Checking Shopify connection...</span>
+        <span class="badge-live">LIVE SYSTEM</span>
+        <span id="ShopifyPulseText">Connecting to Shopify webhook stream...</span>
       </div>
       <div class="auto-refresh-wrap">
         <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
@@ -743,7 +849,9 @@
       <div class="stat-card">
         <div class="stat-header">
           <span class="stat-title">Sent Today</span>
-          <div class="stat-icon" style="background:#fef3c7; color:#b45309;">📅</div>
+          <div class="stat-icon" style="background:#fef3c7; color:#b45309;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          </div>
         </div>
         <div class="stat-value" id="StatToday">0</div>
         <div class="stat-sub">Since 12:00 AM IST</div>
@@ -752,7 +860,9 @@
       <div class="stat-card">
         <div class="stat-header">
           <span class="stat-title">Delivered</span>
-          <div class="stat-icon" style="background:var(--success-bg); color:var(--success);">✔️</div>
+          <div class="stat-icon" style="background:var(--success-bg); color:var(--success);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          </div>
         </div>
         <div class="stat-value" id="StatDelivered">0</div>
         <div class="stat-sub">Confirmed on customer phone</div>
@@ -761,7 +871,9 @@
       <div class="stat-card">
         <div class="stat-header">
           <span class="stat-title">Read by Customer</span>
-          <div class="stat-icon" style="background:var(--info-bg); color:var(--info);">👁️</div>
+          <div class="stat-icon" style="background:var(--info-bg); color:var(--info);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+          </div>
         </div>
         <div class="stat-value" id="StatRead">0</div>
         <div class="stat-sub">Opened WhatsApp messages</div>
@@ -770,7 +882,9 @@
       <div class="stat-card">
         <div class="stat-header">
           <span class="stat-title">Failed / Skipped</span>
-          <div class="stat-icon" style="background:var(--danger-bg); color:var(--danger);">⚠️</div>
+          <div class="stat-icon" style="background:var(--danger-bg); color:var(--danger);">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          </div>
         </div>
         <div class="stat-value" id="StatFailed" style="color:var(--danger);">0</div>
         <div class="stat-sub" id="StatFailedSub">0 missing numbers</div>
@@ -779,7 +893,9 @@
       <div class="stat-card">
         <div class="stat-header">
           <span class="stat-title">Scheduled Queue</span>
-          <div class="stat-icon" style="background:#eef2ff; color:#6366f1;">🕒</div>
+          <div class="stat-icon" style="background:#eef2ff; color:#6366f1;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          </div>
         </div>
         <div class="stat-value" id="StatScheduled">0</div>
         <div class="stat-sub">Queued for 11:00 AM Milling</div>
@@ -788,7 +904,9 @@
       <div class="stat-card">
         <div class="stat-header">
           <span class="stat-title">Delivery Rate</span>
-          <div class="stat-icon" style="background:#f1f5f9; color:#475569;">📊</div>
+          <div class="stat-icon" style="background:#f1f5f9; color:#475569;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+          </div>
         </div>
         <div class="stat-value" id="StatRate">100%</div>
         <div class="stat-sub">Overall successful delivery</div>
@@ -799,15 +917,18 @@
     <div class="automations-card">
       <div class="automations-header">
         <div class="automations-title">
-          <span>⚙️ WhatsApp Journey Automations</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          <span>WhatsApp Journey Automations</span>
         </div>
-        <span style="font-size: 12px; color: var(--text-muted);">Toggle any stage on/off instantly without restarting server</span>
+        <span style="font-size: 12px; color: var(--text-muted);">Toggle stages on/off instantly without restarting server</span>
       </div>
 
       <div class="toggles-grid">
         <div class="toggle-item">
           <div class="toggle-label-wrap">
-            <span class="toggle-emoji">🎉</span>
+            <div class="toggle-icon-wrap" style="background:#fef3c7; color:#b45309;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            </div>
             <div>
               <div class="toggle-title">Order Confirmation</div>
               <div class="toggle-template">thank_you_new (Instant)</div>
@@ -821,7 +942,9 @@
 
         <div class="toggle-item">
           <div class="toggle-label-wrap">
-            <span class="toggle-emoji">🌾</span>
+            <div class="toggle-icon-wrap" style="background:#ecfdf5; color:#065f46;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            </div>
             <div>
               <div class="toggle-title">Fresh Milling Started</div>
               <div class="toggle-template">fresh_milling_started_new (Next Day 11 AM)</div>
@@ -835,7 +958,9 @@
 
         <div class="toggle-item">
           <div class="toggle-label-wrap">
-            <span class="toggle-emoji">🚚</span>
+            <div class="toggle-icon-wrap" style="background:#eff6ff; color:#1e40af;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+            </div>
             <div>
               <div class="toggle-title">Order Shipped</div>
               <div class="toggle-template">order_shipped_new (On Dispatch)</div>
@@ -849,7 +974,9 @@
 
         <div class="toggle-item">
           <div class="toggle-label-wrap">
-            <span class="toggle-emoji">⭐</span>
+            <div class="toggle-icon-wrap" style="background:#fff7ed; color:#c2410c;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            </div>
             <div>
               <div class="toggle-title">Delivered & Feedback</div>
               <div class="toggle-template">feedback_new (On Delivery)</div>
@@ -875,7 +1002,7 @@
         </div>
 
         <div class="search-wrap">
-          <span class="search-icon">🔍</span>
+          <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
           <input type="text" id="SearchInput" class="search-input" placeholder="Search Order #, Phone, Name..." oninput="debounceSearch()">
         </div>
       </div>
@@ -908,7 +1035,10 @@
   <div class="modal-overlay" id="TestModal">
     <div class="modal-card">
       <div class="modal-header">
-        <h3 class="modal-title">⚡ Send Test WhatsApp Message</h3>
+        <h3 class="modal-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+          Send Test WhatsApp Message
+        </h3>
         <button class="modal-close" onclick="closeTestModal()">&times;</button>
       </div>
 
@@ -1026,6 +1156,20 @@
       }
     }
 
+    // SVGs for dynamic rendering
+    const ICONS = {
+      delivered: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="18 6 9 17 4 12"></polyline><polyline points="22 10 13 21 11 19"></polyline></svg>`,
+      read: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`,
+      sent: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>`,
+      scheduled: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`,
+      failed: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`,
+      skipped: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><line x1="8" y1="12" x2="16" y2="12"></line></svg>`,
+      alert: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`,
+      stage: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`,
+      chat: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>`,
+      resend: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>`
+    };
+
     // Load Messages Table
     async function loadMessages() {
       try {
@@ -1038,7 +1182,9 @@
           tbody.innerHTML = `
             <tr>
               <td colspan="7" class="empty-state">
-                <div class="empty-icon">📭</div>
+                <div class="empty-icon-wrap">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>
+                </div>
                 <div style="font-weight:600; font-size:15px; margin-bottom:4px;">No messages found</div>
                 <div>No messages match the current filter or search criteria.</div>
               </td>
@@ -1052,33 +1198,24 @@
           
           let statusBadge = '';
           if (m.status === 'delivered') {
-            statusBadge = `<span class="status-badge status-delivered">✔️✔️ Delivered</span>`;
+            statusBadge = `<span class="status-badge status-delivered">${ICONS.delivered} Delivered</span>`;
           } else if (m.status === 'read') {
-            statusBadge = `<span class="status-badge status-read">👁️ Read</span>`;
+            statusBadge = `<span class="status-badge status-read">${ICONS.read} Read</span>`;
           } else if (m.status === 'sent') {
-            statusBadge = `<span class="status-badge status-sent">↗️ Dispatched</span>`;
+            statusBadge = `<span class="status-badge status-sent">${ICONS.sent} Dispatched</span>`;
           } else if (m.status === 'scheduled') {
             const schedDate = m.scheduledAt ? formatIST(m.scheduledAt) : 'Next Day 11 AM';
-            statusBadge = `<span class="status-badge status-scheduled">🕒 Queued for ${schedDate}</span>`;
+            statusBadge = `<span class="status-badge status-scheduled">${ICONS.scheduled} Queued for ${schedDate}</span>`;
           } else if (m.status === 'failed') {
-            statusBadge = `<span class="status-badge status-failed">❌ Undelivered</span>`;
+            statusBadge = `<span class="status-badge status-failed">${ICONS.failed} Undelivered</span>`;
           } else if (m.status === 'skipped') {
-            statusBadge = `<span class="status-badge status-skipped">⚪ Skipped (No Phone)</span>`;
+            statusBadge = `<span class="status-badge status-skipped">${ICONS.skipped} Skipped (No Phone)</span>`;
           }
 
           let failureHtml = '';
           if (m.failureReason) {
-            failureHtml = `<div class="reason-box">⚠️ ${escapeHtml(m.failureReason)}</div>`;
+            failureHtml = `<div class="reason-box">${ICONS.alert} ${escapeHtml(m.failureReason)}</div>`;
           }
-
-          const stageEmojis = {
-            order_confirmed: '🎉',
-            milling_started: '🌾',
-            order_shipped: '🚚',
-            order_feedback: '⭐',
-            manual_test: '⚡'
-          };
-          const emoji = stageEmojis[m.stage] || '📩';
 
           const cleanPhone = m.phone ? m.phone.replace(/\D/g, '') : '';
           const waChatLink = cleanPhone ? `https://wa.me/${cleanPhone}` : '#';
@@ -1091,12 +1228,12 @@
               <td>
                 <div class="phone-cell">
                   <span>${escapeHtml(m.phone || m.rawPhone || 'None')}</span>
-                  ${cleanPhone ? `<a href="${waChatLink}" target="_blank" class="wa-link" title="Open WhatsApp Chat">💬</a>` : ''}
+                  ${cleanPhone ? `<a href="${waChatLink}" target="_blank" class="wa-link" title="Open WhatsApp Chat">${ICONS.chat}</a>` : ''}
                 </div>
               </td>
               <td>
                 <div class="stage-badge">
-                  <span>${emoji}</span>
+                  ${ICONS.stage}
                   <span>${escapeHtml(m.stageLabel || m.stage)}</span>
                 </div>
               </td>
@@ -1108,10 +1245,10 @@
                 <div style="display:flex; gap:6px;">
                   ${cleanPhone ? `
                     <button class="btn-table-action" onclick="resendMessage('${m.id}')" title="Resend Message">
-                      🔄 Resend
+                      ${ICONS.resend} Resend
                     </button>
                     <a href="${waChatLink}" target="_blank" class="btn-table-action" style="text-decoration:none;" title="Chat on WhatsApp">
-                      💬 Chat
+                      ${ICONS.chat} Chat
                     </a>
                   ` : `<span style="font-size:11px; color:#94a3b8;">No phone</span>`}
                 </div>
@@ -1228,19 +1365,19 @@
           resBox.style.background = 'var(--success-bg)';
           resBox.style.color = '#065f46';
           resBox.style.border = '1px solid rgba(16, 185, 129, 0.3)';
-          resBox.innerHTML = `<strong>✔️ Delivered successfully!</strong> WATI Message ID: ${data.result?.messageId || 'OK'}`;
+          resBox.innerHTML = `<strong>Delivered successfully!</strong> WATI Message ID: ${data.result?.messageId || 'OK'}`;
           loadDashboard();
         } else {
           resBox.style.background = 'var(--danger-bg)';
           resBox.style.color = '#991b1b';
           resBox.style.border = '1px solid rgba(239, 68, 68, 0.3)';
-          resBox.innerHTML = `<strong>❌ Failed:</strong> ${data.error || 'Unknown error'}`;
+          resBox.innerHTML = `<strong>Failed:</strong> ${data.error || 'Unknown error'}`;
         }
       } catch (err) {
         resBox.style.display = 'block';
         resBox.style.background = 'var(--danger-bg)';
         resBox.style.color = '#991b1b';
-        resBox.innerHTML = `<strong>❌ Error:</strong> ${err.message}`;
+        resBox.innerHTML = `<strong>Error:</strong> ${err.message}`;
       } finally {
         btn.disabled = false;
         btn.innerText = 'Send WhatsApp Message';

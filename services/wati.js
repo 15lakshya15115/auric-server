@@ -100,7 +100,7 @@ async function sendTemplateMessage({ phone, templateName, parameters = [], broad
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok || data?.result === false) {
-    const rawError = data?.message || data?.error || `HTTP ${response.status} ${response.statusText}`;
+    const rawError = data?.info || data?.message || data?.error || `HTTP ${response.status} ${response.statusText}`;
     const friendlyReason = parseFailureReason(rawError, phone);
     console.error(`[WATI ERROR] Failed sending to ${cleanPhone}:`, rawError);
     const err = new Error(rawError);

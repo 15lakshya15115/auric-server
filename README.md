@@ -1,6 +1,6 @@
-# Auric Mills — WhatsApp Automation Server (WATI)
+# Auric Mills — WhatsApp Automation Server & Live Dashboard (WATI)
 
-Independent Node.js middleware server connecting **Shopify Orders** to **WATI WhatsApp Business API** for Auric Mills.
+Independent Node.js middleware server connecting **Shopify Orders** to **WATI WhatsApp Business API** with a real-time command-center **Admin Dashboard** for Auric Mills.
 
 ---
 
@@ -13,22 +13,39 @@ Independent Node.js middleware server connecting **Shopify Orders** to **WATI Wh
 
 ---
 
+## 📊 Live Admin Dashboard (`/dashboard`)
+
+Access at: `https://your-domain.com/dashboard` (Default PIN: `auric2026`)
+
+* **Live Delivery Badges:** `Delivered ✔️✔️`, `Read 👁️`, `Dispatched ↗️`, `Failed ❌`, `Scheduled 🕒`.
+* **Exact Failure Reasons:** Identifies why a message didn't reach a customer (*"Not on WhatsApp"*, *"Missing phone at checkout"*, *"Balance exhausted"*, etc.).
+* **Shopify Webhook Pulse:** Real-time indicator showing if Shopify webhooks are receiving live orders.
+* **1-Click Actions:** Direct "Resend" and "Open WhatsApp Chat" (`wa.me`) for any customer.
+* **Automation Toggles:** Turn on/off individual message stages with a switch without restarting the server.
+* **Export CSV:** One-click download of all WhatsApp message logs and customer delivery reports.
+* **Test Tool:** Built-in modal to test any WhatsApp template to your own phone number.
+
+---
+
 ## 📁 Project Structure
 
 ```
 auric-server/
 ├── data/
-│   └── jobs.json         # Persistent database for scheduled 2-day drip messages
+│   ├── jobs.json             # Persistent database for scheduled 11:00 AM drip messages
+│   ├── messages.json         # Full delivery logs & status history (persistent)
+│   ├── settings.json         # Automation toggles & webhook pulse tracker
+│   └── sent_events.json      # Deduplication locks (prevents double messages)
+├── public/
+│   └── dashboard.html        # Interactive, mobile-responsive Web Dashboard
 ├── services/
-│   ├── db.js             # Atomic database manager
-│   ├── wati.js           # WATI WhatsApp API caller & phone normalizer
-│   └── scheduler.js      # Background cron scheduler (every 5 mins)
-├── .env                  # Live WATI credentials & template mappings
-├── .env.example          # Sample environment variables
-├── .gitignore            # Protects secrets & node_modules
-├── package.json          # Node dependencies
-├── server.js             # Express routes & Shopify webhooks
-└── README.md             # Documentation
+│   ├── db.js                 # Database manager (messages, stats, settings, locks)
+│   ├── wati.js               # WATI WhatsApp API client, phone normalizer & failure parser
+│   └── scheduler.js          # Background cron scheduler (runs every 5 mins)
+├── .env                      # Live WATI credentials, template names & DASHBOARD_PIN
+├── .env.example              # Sample environment template
+├── server.js                 # Express routes, dashboard API & Shopify/WATI webhooks
+└── README.md                 # Documentation
 ```
 
 ---
@@ -41,54 +58,26 @@ npm install
 npm start
 ```
 
-Health Check: `http://localhost:3000/health`  
-Admin Jobs: `http://localhost:3000/admin/jobs`
+* Dashboard: `http://localhost:3000/dashboard` (PIN: `auric2026`)
+* Health Check: `http://localhost:3000/health`
 
 ---
 
-## ☁️ Deploy to Render.com (100% Free - $0/month)
+## ☁️ Deploy to Hostinger (Shared / Cloud Hosting)
 
-1. Push this `auric-server` folder to a new private GitHub repository (e.g. `auric-whatsapp-server`).
-2. Open [Render.com](https://render.com) ➔ Click **New +** ➔ **Web Service**.
-3. Select your GitHub repository.
-4. Settings:
-   - **Environment:** Node
-   - **Build Command:** `npm install`
-   - **Start Command:** `node server.js`
-   - **Plan:** Free ($0)
-5. Under **Environment Variables**, copy-paste the values from `.env`:
-   - `WATI_API_ENDPOINT`
-   - `WATI_ACCESS_TOKEN`
-   - `TEMPLATE_ORDER_CONFIRMED`
-   - `TEMPLATE_MILLING_STARTED`
-   - `TEMPLATE_ORDER_SHIPPED`
-   - `TEMPLATE_DELIVERY_FEEDBACK`
-6. Click **Create Web Service**. You will get a live URL like:
-   `https://auric-server.onrender.com`
-
----
-
-## 🔗 Connect Shopify Webhooks
-
-In **Shopify Admin** ➔ **Settings** ➔ **Notifications** ➔ Scroll down to **Webhooks**:
-
-1. **Order Creation:**
-   - Event: `Order creation`
-   - Format: `JSON`
-   - URL: `https://your-render-url.onrender.com/webhooks/shopify/orders-create`
-2. **Order Fulfillment:**
-   - Event: `Order fulfillment`
-   - Format: `JSON`
-   - URL: `https://your-render-url.onrender.com/webhooks/shopify/orders-fulfilled`
-3. **Order Delivered:**
-   - Event: `Order updated`
-   - Format: `JSON`
-   - URL: `https://your-render-url.onrender.com/webhooks/shopify/orders-delivered`
-
----
-
-## ⏰ Keep Server Awake for Free
-
-On [Cron-Job.org](https://cron-job.org) (100% Free):
-- Set a cron job to call `https://your-render-url.onrender.com/cron/process` every 5-10 minutes.
-- This ensures your free Render server never sleeps and triggers scheduled 2-day milling messages right on time!
+1. In Hostinger hPanel, create a subdomain (e.g., `whatsapp.auricmills.com`) and activate **Free SSL**.
+2. Go to **Node.js** in hPanel &rarr; Click **Create Application**:
+   * Version: `20.x` or `18.x`
+   * Mode: `Production`
+   * Startup File: `server.js`
+   * App Root: `public_html/whatsapp`
+3. Upload all files from this folder (except `node_modules`).
+4. Click **NPM Install** in hPanel, then **Start / Restart Application**.
+5. Set up **Cron Job** in hPanel (Runs every 5 mins: `*/5 * * * *`):
+   ```bash
+   curl -s https://whatsapp.auricmills.com/cron/process > /dev/null 2>&1
+   ```
+6. In **Shopify Admin** &rarr; **Settings** &rarr; **Notifications** &rarr; **Webhooks**:
+   * `Order creation` &rarr; `https://whatsapp.auricmills.com/webhooks/shopify/orders-create`
+   * `Order fulfillment` &rarr; `https://whatsapp.auricmills.com/webhooks/shopify/orders-fulfilled`
+   * `Order updated` &rarr; `https://whatsapp.auricmills.com/webhooks/shopify/orders-delivered`

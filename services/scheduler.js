@@ -13,6 +13,12 @@ async function processPendingMessages() {
     return { processed: 0, skipped: true };
   }
 
+  const settings = db.getSettings();
+  if (settings.automations && settings.automations.milling_started === false) {
+    console.log('[Scheduler] Milling drip automation is currently PAUSED via dashboard.');
+    return { processed: 0, paused: true };
+  }
+
   isProcessing = true;
   let processedCount = 0;
 
@@ -29,7 +35,7 @@ async function processPendingMessages() {
     for (const job of dueJobs) {
       try {
         console.log(`[Scheduler] Sending scheduled "${job.templateName}" to ${job.phone}`);
-        await sendTemplateMessage({
+        const res = await sendTemplateMessage({
           phone: job.phone,
           templateName: job.templateName,
           parameters: job.parameters,
@@ -38,10 +44,20 @@ async function processPendingMessages() {
 
         db.markJobSent(job.id);
         db.recordMessageSent(job.orderId, 'milling_started');
+        db.updateMessageStatus(null, 'delivered', {
+          orderId: job.orderId,
+          stage: 'milling_started',
+          watiMessageId: res.messageId
+        });
         processedCount++;
       } catch (err) {
         console.error(`[Scheduler ERROR] Failed job ${job.id}:`, err.message);
         db.markJobFailed(job.id, err.message);
+        db.updateMessageStatus(null, 'failed', {
+          orderId: job.orderId,
+          stage: 'milling_started',
+          failureReason: err.friendlyReason || err.message
+        });
       }
     }
   } catch (err) {

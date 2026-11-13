@@ -20,6 +20,33 @@ function normalizePhoneNumber(rawPhone) {
 }
 
 /**
+ * Determine human-friendly failure reason from raw error text / status
+ */
+function parseFailureReason(errorMsg, rawPhone = '') {
+  const msg = String(errorMsg || '').toLowerCase();
+
+  if (!rawPhone || String(rawPhone).trim() === '') {
+    return 'Missing phone number (Customer used email only)';
+  }
+  if (msg.includes('invalid phone') || msg.includes('not a valid whatsapp') || msg.includes('not registered') || msg.includes('valid whatsapp')) {
+    return 'Phone number not registered on WhatsApp';
+  }
+  if (msg.includes('balance') || msg.includes('insufficient') || msg.includes('credit') || msg.includes('quota') || msg.includes('payment')) {
+    return 'WATI balance / conversation credits exhausted';
+  }
+  if (msg.includes('template') || msg.includes('parameter') || msg.includes('rejected')) {
+    return 'WATI template parameter mismatch or template issue';
+  }
+  if (msg.includes('opted out') || msg.includes('blocked') || msg.includes('spam')) {
+    return 'Customer blocked or opted out of WhatsApp messages';
+  }
+  if (msg.includes('timeout') || msg.includes('econnreset') || msg.includes('network')) {
+    return 'Temporary network timeout reaching WhatsApp gateway';
+  }
+  return errorMsg || 'Delivery failed';
+}
+
+/**
  * Send pre-approved WhatsApp template via WATI API
  */
 async function sendTemplateMessage({ phone, templateName, parameters = [], broadcastName = 'Auric_Notification' }) {
@@ -32,7 +59,9 @@ async function sendTemplateMessage({ phone, templateName, parameters = [], broad
 
   const cleanPhone = normalizePhoneNumber(phone);
   if (!cleanPhone || cleanPhone.length < 10) {
-    throw new Error(`Invalid phone number: ${phone}`);
+    const err = new Error(`Invalid phone number: ${phone}`);
+    err.friendlyReason = 'Invalid phone number format';
+    throw err;
   }
 
   const baseUrl = endpoint.replace(/\/+$/, '');
@@ -71,16 +100,22 @@ async function sendTemplateMessage({ phone, templateName, parameters = [], broad
   const data = await response.json().catch(() => ({}));
 
   if (!response.ok || data?.result === false) {
-    const errorMsg = data?.message || data?.error || `HTTP ${response.status} ${response.statusText}`;
-    console.error(`[WATI ERROR] Failed sending to ${cleanPhone}:`, errorMsg);
-    throw new Error(`WATI API Error: ${errorMsg}`);
+    const rawError = data?.message || data?.error || `HTTP ${response.status} ${response.statusText}`;
+    const friendlyReason = parseFailureReason(rawError, phone);
+    console.error(`[WATI ERROR] Failed sending to ${cleanPhone}:`, rawError);
+    const err = new Error(rawError);
+    err.friendlyReason = friendlyReason;
+    err.rawResponse = data;
+    throw err;
   }
 
-  console.log(`[WATI SUCCESS] Template "${templateName}" delivered to ${cleanPhone}`);
-  return { success: true, data };
+  const messageId = data?.model?.id || data?.id || data?.messageId || data?.info || null;
+  console.log(`[WATI SUCCESS] Template "${templateName}" dispatched to ${cleanPhone} (ID: ${messageId || 'OK'})`);
+  return { success: true, data, messageId };
 }
 
 module.exports = {
   normalizePhoneNumber,
+  parseFailureReason,
   sendTemplateMessage
 };

@@ -4,6 +4,7 @@ const path = require('path');
 const { sendTemplateMessage, normalizePhoneNumber, parseFailureReason } = require('./services/wati');
 const db = require('./services/db');
 const { initScheduler, processPendingMessages } = require('./services/scheduler');
+const { syncAllHistoricalMessages } = require('./services/watiSync');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -109,6 +110,20 @@ app.post('/api/dashboard/settings', authMiddleware, (req, res) => {
   const updated = db.updateSettings(req.body);
   addLog('[Settings] Automation toggles updated from Dashboard.');
   res.json({ status: 'success', settings: updated });
+});
+
+// Sync WATI Historical Messages API
+app.post('/api/dashboard/sync-history', authMiddleware, async (req, res) => {
+  try {
+    addLog('[Sync] Manual historical sync triggered from Dashboard...');
+    const result = await syncAllHistoricalMessages({ concurrency: 12 });
+    addLog(`[Sync] Completed. ${result.addedCount} new messages added. Total in database: ${result.totalMessages}.`);
+    res.json({ status: 'success', ...result });
+  } catch (err) {
+    addLog(`[Sync ERROR]: ${err.message}`);
+    console.error('[Sync ERROR]:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // 1-Click Resend API
@@ -588,4 +603,17 @@ app.listen(PORT, () => {
   console.log(`📋 Admin Jobs:   http://localhost:${PORT}/admin/jobs`);
   console.log(`🔑 PIN:          ${DASHBOARD_PIN}`);
   console.log(`====================================================`);
+
+  // Background Auto-sync historical messages on startup if database is empty
+  setTimeout(async () => {
+    try {
+      const existing = db.readMessages();
+      if (!existing || existing.length === 0) {
+        console.log('[Startup Auto-Sync] Messages database is empty. Auto-syncing past history from WATI...');
+        await syncAllHistoricalMessages({ concurrency: 10 });
+      }
+    } catch (err) {
+      console.warn('[Startup Auto-Sync Warning]:', err.message);
+    }
+  }, 2500);
 });

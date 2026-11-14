@@ -812,6 +812,10 @@
       </div>
 
       <div class="header-actions">
+        <button class="btn btn-secondary" id="SyncHistoryBtn" onclick="syncWatiHistory()" title="Fetch all past orders & messages from WATI">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+          <span id="SyncBtnText">Sync Past History</span>
+        </button>
         <button class="btn btn-secondary" onclick="openTestModal()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
           Send Test
@@ -1027,6 +1031,28 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Table Pagination Footer -->
+      <div class="pagination-footer" style="display:flex; justify-content:space-between; align-items:center; padding:14px 20px; border-top:1px solid var(--border); flex-wrap:wrap; gap:12px; background:#fafbfc; border-bottom-left-radius:var(--radius); border-bottom-right-radius:var(--radius);">
+        <div style="font-size:13px; color:var(--text-muted); font-weight:500;" id="PaginationInfo">
+          Showing 1 to 50 of 0 messages
+        </div>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <select id="PageSizeSelect" onchange="changePageSize(this.value)" style="padding:6px 10px; border-radius:8px; border:1px solid var(--border); font-size:13px; background:#fff; font-weight:500; cursor:pointer;">
+            <option value="50">50 per page</option>
+            <option value="100">100 per page</option>
+            <option value="250">250 per page</option>
+            <option value="500">500 per page</option>
+          </select>
+          <button class="btn btn-secondary" id="PrevPageBtn" onclick="prevPage()" style="padding:6px 12px; font-size:12.5px; color:var(--text-main); border:1px solid var(--border); background:#fff;">
+            &larr; Prev
+          </button>
+          <span id="CurrentPageSpan" style="font-size:13px; font-weight:700; min-width:48px; text-align:center; color:var(--text-main);">1 / 1</span>
+          <button class="btn btn-secondary" id="NextPageBtn" onclick="nextPage()" style="padding:6px 12px; font-size:12.5px; color:var(--text-main); border:1px solid var(--border); background:#fff;">
+            Next &rarr;
+          </button>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -1076,6 +1102,9 @@
     let searchQuery = '';
     let searchTimeout = null;
     let autoRefreshInterval = null;
+    let currentPage = 1;
+    let pageSize = 50;
+    let totalMessagesCount = 0;
 
     // PIN Protection (Default: auric2026 or from server)
     function checkAuth() {
@@ -1173,10 +1202,14 @@
     // Load Messages Table
     async function loadMessages() {
       try {
-        const url = `/api/dashboard/messages?status=${currentFilter}&search=${encodeURIComponent(searchQuery)}`;
+        const offset = (currentPage - 1) * pageSize;
+        const url = `/api/dashboard/messages?status=${currentFilter}&search=${encodeURIComponent(searchQuery)}&limit=${pageSize}&offset=${offset}`;
         const res = await fetch(url, { headers: getAuthHeaders() });
         const data = await res.json();
         const tbody = document.getElementById('MessagesTableBody');
+
+        totalMessagesCount = data.total || 0;
+        updatePaginationUI();
 
         if (!data.messages || data.messages.length === 0) {
           tbody.innerHTML = `
@@ -1283,6 +1316,7 @@
 
     function setFilter(filter, el) {
       currentFilter = filter;
+      currentPage = 1;
       document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
       el.classList.add('active');
       loadMessages();
@@ -1292,8 +1326,85 @@
       clearTimeout(searchTimeout);
       searchTimeout = setTimeout(() => {
         searchQuery = document.getElementById('SearchInput').value;
+        currentPage = 1;
         loadMessages();
       }, 300);
+    }
+
+    function updatePaginationUI() {
+      const info = document.getElementById('PaginationInfo');
+      const prevBtn = document.getElementById('PrevPageBtn');
+      const nextBtn = document.getElementById('NextPageBtn');
+      const pageSpan = document.getElementById('CurrentPageSpan');
+
+      if (!info) return;
+
+      const totalPages = Math.ceil(totalMessagesCount / pageSize) || 1;
+      const start = totalMessagesCount === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+      const end = Math.min(currentPage * pageSize, totalMessagesCount);
+
+      info.textContent = `Showing ${start} to ${end} of ${totalMessagesCount} messages`;
+      pageSpan.textContent = `${currentPage} / ${totalPages}`;
+
+      prevBtn.disabled = currentPage <= 1;
+      prevBtn.style.opacity = currentPage <= 1 ? '0.5' : '1';
+      prevBtn.style.cursor = currentPage <= 1 ? 'not-allowed' : 'pointer';
+
+      nextBtn.disabled = currentPage >= totalPages;
+      nextBtn.style.opacity = currentPage >= totalPages ? '0.5' : '1';
+      nextBtn.style.cursor = currentPage >= totalPages ? 'not-allowed' : 'pointer';
+    }
+
+    function prevPage() {
+      if (currentPage > 1) {
+        currentPage--;
+        loadMessages();
+      }
+    }
+
+    function nextPage() {
+      const totalPages = Math.ceil(totalMessagesCount / pageSize) || 1;
+      if (currentPage < totalPages) {
+        currentPage++;
+        loadMessages();
+      }
+    }
+
+    function changePageSize(val) {
+      pageSize = parseInt(val, 10) || 50;
+      currentPage = 1;
+      loadMessages();
+    }
+
+    async function syncWatiHistory() {
+      const btn = document.getElementById('SyncHistoryBtn');
+      const btnText = document.getElementById('SyncBtnText');
+      if (!confirm('Sync full historical messages from WATI API now? This will restore all past messages.')) return;
+
+      try {
+        btn.disabled = true;
+        btnText.textContent = 'Syncing WATI History...';
+        btn.style.opacity = '0.7';
+
+        const res = await fetch('/api/dashboard/sync-history', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() }
+        });
+        const data = await res.json();
+        if (data.status === 'success') {
+          alert(`Sync complete! Added ${data.addedCount} new records. Total messages: ${data.totalMessages}.`);
+          currentPage = 1;
+          loadDashboard();
+        } else {
+          alert(`Sync failed: ${data.error || 'Unknown error'}`);
+        }
+      } catch (err) {
+        alert(`Error syncing: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+        btnText.textContent = 'Sync Past History';
+        btn.style.opacity = '1';
+      }
     }
 
     async function updateAutomation(key, val) {

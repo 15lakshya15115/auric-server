@@ -106,8 +106,8 @@ function readMessages() {
 function writeMessages(messages) {
   try {
     const tempFile = `${MESSAGES_FILE}.tmp`;
-    // Keep last 5000 records to prevent infinite growth
-    const trimmed = messages.slice(-5000);
+    // Keep top 5000 records (newest first) to prevent infinite growth
+    const trimmed = messages.slice(0, 5000);
     fs.writeFileSync(tempFile, JSON.stringify(trimmed, null, 2), 'utf-8');
     fs.renameSync(tempFile, MESSAGES_FILE);
   } catch (err) {
@@ -460,6 +460,8 @@ function tryAcquireLock(orderId, type, phone = '', cooldownMs = 15 * 60 * 1000) 
 }
 
 module.exports = {
+  readMessages,
+  writeMessages,
   getSettings,
   updateSettings,
   recordWebhookPulse,

@@ -237,6 +237,108 @@ function getAllMessages({ limit = 50, offset = 0, status, search, stage } = {}) 
 }
 
 /**
+ * Retrieve unified customer/order records (1 row per order) with consolidated stages & messages
+ */
+function getGroupedOrders({ limit = 50, offset = 0, status, search } = {}) {
+  const messages = readMessages();
+  const jobs = readJobs();
+  const ordersMap = new Map();
+
+  for (const m of messages) {
+    const key = (m.orderId && m.orderId !== '-' && m.orderId !== 'MANUAL_TEST') ? m.orderId : (m.phone || m.id);
+    if (!ordersMap.has(key)) {
+      ordersMap.set(key, {
+        orderId: m.orderId || '-',
+        customerName: m.customerName || 'Customer',
+        phone: m.phone || '',
+        rawPhone: m.rawPhone || m.phone || '',
+        latestTimestamp: m.createdAt || m.sentAt || 0,
+        stages: {},
+        messages: [],
+        overallStatus: 'sent'
+      });
+    }
+
+    const ord = ordersMap.get(key);
+    ord.messages.push(m);
+    if (m.createdAt > ord.latestTimestamp) {
+      ord.latestTimestamp = m.createdAt;
+    }
+    if ((ord.customerName === 'Customer' || ord.customerName === 'Valued Customer') &&
+        m.customerName && m.customerName !== 'Customer' && m.customerName !== 'Valued Customer') {
+      ord.customerName = m.customerName;
+    }
+
+    if (!ord.stages[m.stage] || m.createdAt > (ord.stages[m.stage].createdAt || 0)) {
+      ord.stages[m.stage] = m;
+    }
+  }
+
+  // Incorporate scheduled jobs from jobs.json (e.g. Next-day 11 AM Milling Drip)
+  for (const j of jobs) {
+    const key = j.orderId || j.phone;
+    if (ordersMap.has(key)) {
+      const ord = ordersMap.get(key);
+      if (!ord.stages['milling_started'] || ord.stages['milling_started'].status === 'scheduled') {
+        ord.stages['milling_started'] = {
+          orderId: j.orderId,
+          stage: 'milling_started',
+          stageLabel: 'Fresh Milling Drip',
+          status: j.status === 'pending' ? 'scheduled' : j.status,
+          scheduledAt: j.scheduledAt,
+          createdAt: j.createdAt,
+          customerName: j.customerName,
+          phone: j.phone
+        };
+      }
+    }
+  }
+
+  let list = Array.from(ordersMap.values());
+
+  for (const ord of list) {
+    const statuses = ord.messages.map(m => m.status);
+    if (statuses.includes('failed')) ord.overallStatus = 'failed';
+    else if (statuses.includes('read')) ord.overallStatus = 'read';
+    else if (statuses.includes('delivered')) ord.overallStatus = 'delivered';
+    else if (statuses.includes('scheduled')) ord.overallStatus = 'scheduled';
+    else ord.overallStatus = 'sent';
+
+    // Sort customer's messages newest first
+    ord.messages.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  }
+
+  // Filter by status if requested
+  if (status && status !== 'all') {
+    list = list.filter(ord => {
+      if (status === 'delivered') return ord.overallStatus === 'delivered' || ord.overallStatus === 'read';
+      if (status === 'read') return ord.overallStatus === 'read';
+      if (status === 'scheduled') return Object.values(ord.stages).some(s => s.status === 'scheduled');
+      if (status === 'failed') return ord.overallStatus === 'failed' || ord.messages.some(m => m.status === 'failed');
+      return true;
+    });
+  }
+
+  // Search filter
+  if (search && search.trim() !== '') {
+    const q = search.trim().toLowerCase();
+    list = list.filter(ord =>
+      (ord.orderId && ord.orderId.toLowerCase().includes(q)) ||
+      (ord.phone && ord.phone.includes(q)) ||
+      (ord.customerName && ord.customerName.toLowerCase().includes(q))
+    );
+  }
+
+  // Sort newest first
+  list.sort((a, b) => (b.latestTimestamp || 0) - (a.latestTimestamp || 0));
+
+  const total = list.length;
+  const page = list.slice(offset, offset + limit);
+
+  return { total, orders: page };
+}
+
+/**
  * Calculate KPI summary stats
  */
 function getDashboardStats() {
@@ -468,6 +570,7 @@ module.exports = {
   recordMessage,
   updateMessageStatus,
   getAllMessages,
+  getGroupedOrders,
   getDashboardStats,
   addJob,
   getDuePendingJobs,

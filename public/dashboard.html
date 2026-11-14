@@ -779,6 +779,146 @@
       text-align: center;
       box-shadow: 0 20px 40px rgba(0,0,0,0.4);
     }
+    .modal-card-lg {
+      max-width: 920px !important;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      padding: 24px !important;
+      overflow: hidden;
+    }
+    .modal-body-scroll {
+      overflow-y: auto;
+      padding-right: 6px;
+      margin-top: 14px;
+      max-height: calc(90vh - 120px);
+    }
+    .clickable-row {
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .clickable-row:hover td {
+      background-color: #f8fafc !important;
+    }
+    .journey-mini-steps {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 8px;
+      background: #f1f5f9;
+      border-radius: 20px;
+    }
+    .step-dot {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 12px;
+      color: #64748b;
+      background: #e2e8f0;
+      white-space: nowrap;
+    }
+    .step-dot.completed {
+      background: #ecfdf5;
+      color: #047857;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .step-dot.scheduled {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+    .step-dot.failed {
+      background: #fef2f2;
+      color: #b91c1c;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .customer-hero {
+      background: linear-gradient(135deg, #221509 0%, #341c0b 100%);
+      color: #fff;
+      padding: 18px 20px;
+      border-radius: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .customer-stages-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+    .customer-stage-card {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      position: relative;
+      transition: all 0.2s;
+    }
+    .customer-stage-card:hover {
+      box-shadow: var(--shadow);
+      border-color: #cbd5e1;
+    }
+    .stage-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .stage-card-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .log-console {
+      background: #090d16;
+      color: #e2e8f0;
+      font-family: 'JetBrains Mono', Consolas, 'Courier New', monospace;
+      font-size: 12.5px;
+      line-height: 1.6;
+      padding: 16px;
+      border-radius: 10px;
+      height: 480px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .log-line {
+      padding: 4px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .log-time {
+      color: #64748b;
+      margin-right: 8px;
+    }
+    .btn-view-details {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-weight: 600;
+      background: #f1f5f9;
+      color: #1e293b;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-view-details:hover {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
   </style>
 </head>
 <body>
@@ -812,6 +952,10 @@
       </div>
 
       <div class="header-actions">
+        <button class="btn btn-secondary" onclick="openLogsModal()" title="View Real-Time Server Console & Webhook Logs">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+          Live Logs
+        </button>
         <button class="btn btn-secondary" id="SyncHistoryBtn" onclick="syncWatiHistory()" title="Fetch all past orders & messages from WATI">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
           <span id="SyncBtnText">Sync Past History</span>
@@ -996,9 +1140,27 @@
 
     <!-- Message History Table -->
     <div class="table-section">
+      <!-- View Mode Selector -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:12px; border-bottom:1px solid var(--border); padding-bottom:14px;">
+        <div style="display:inline-flex; background:#f1f5f9; padding:4px; border-radius:10px; border:1px solid var(--border);">
+          <button id="ViewBtnGrouped" onclick="switchView('grouped')" style="display:flex; align-items:center; gap:6px; padding:7px 16px; border-radius:8px; border:none; font-size:13px; font-weight:700; cursor:pointer; background:var(--primary); color:#fff; transition:all 0.2s;">
+            <svg style="width:15px; height:15px;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            Customers (1 Row Per Order)
+          </button>
+          <button id="ViewBtnAll" onclick="switchView('all')" style="display:flex; align-items:center; gap:6px; padding:7px 16px; border-radius:8px; border:none; font-size:13px; font-weight:600; cursor:pointer; background:transparent; color:var(--text-muted); transition:all 0.2s;">
+            <svg style="width:15px; height:15px;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+            Raw Message Logs
+          </button>
+        </div>
+        <div style="font-size:12.5px; color:var(--text-muted); font-weight:500; display:flex; align-items:center; gap:6px;">
+          <svg style="width:14px; height:14px; color:var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+          Click any customer row to view full timeline, messages & WhatsApp links
+        </div>
+      </div>
+
       <div class="table-controls">
         <div class="filter-tabs">
-          <button class="filter-tab active" data-filter="all" onclick="setFilter('all', this)">All Messages</button>
+          <button class="filter-tab active" data-filter="all" onclick="setFilter('all', this)">All</button>
           <button class="filter-tab" data-filter="delivered" onclick="setFilter('delivered', this)">Delivered</button>
           <button class="filter-tab" data-filter="read" onclick="setFilter('read', this)">Read</button>
           <button class="filter-tab" data-filter="scheduled" onclick="setFilter('scheduled', this)">Scheduled</button>
@@ -1013,20 +1175,20 @@
 
       <div class="table-responsive">
         <table>
-          <thead>
-            <tr>
+          <thead id="TableHead">
+            <tr id="TableHeaderRow">
               <th>Date & Time (IST)</th>
               <th>Order #</th>
               <th>Customer</th>
               <th>Phone Number</th>
-              <th>Journey Stage</th>
-              <th>Delivery Status & Reason</th>
+              <th>4-Step Journey Progress</th>
+              <th>Overall Status</th>
               <th>Action</th>
             </tr>
           </thead>
           <tbody id="MessagesTableBody">
             <tr>
-              <td colspan="7" class="empty-state">Loading messages...</td>
+              <td colspan="7" class="empty-state">Loading records...</td>
             </tr>
           </tbody>
         </table>
@@ -1097,6 +1259,53 @@
     </div>
   </div>
 
+  <!-- Customer Journey & Detail Modal -->
+  <div class="modal-overlay" id="CustomerModal">
+    <div class="modal-card modal-card-lg">
+      <div class="modal-header" style="margin-bottom:12px;">
+        <h3 class="modal-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          Customer Timeline & WhatsApp Messages
+        </h3>
+        <button class="modal-close" onclick="closeCustomerModal()">&times;</button>
+      </div>
+
+      <div class="modal-body-scroll" id="CustomerModalContent">
+        <div style="text-align:center; padding:30px; color:var(--text-muted);">Loading customer details...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live System Logs Modal -->
+  <div class="modal-overlay" id="LogsModal">
+    <div class="modal-card modal-card-lg">
+      <div class="modal-header" style="margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+        <h3 class="modal-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+          Live Server & Webhook Console Logs
+        </h3>
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <label style="display:flex; align-items:center; gap:5px; font-size:12px; color:var(--text-muted); cursor:pointer;">
+            <input type="checkbox" id="LogsAutoRefresh" checked onchange="toggleLogsAutoRefresh()">
+            Auto-refresh (3s)
+          </label>
+          <button class="btn btn-secondary" onclick="loadLogs()" style="padding:4px 10px; font-size:12px; color:var(--text-main); border:1px solid var(--border); background:#fff;">
+            Refresh
+          </button>
+          <button class="btn btn-secondary" onclick="copyLogs()" style="padding:4px 10px; font-size:12px; color:var(--text-main); border:1px solid var(--border); background:#fff;">
+            Copy
+          </button>
+          <button class="btn btn-secondary" onclick="clearLogs()" style="padding:4px 10px; font-size:12px; color:var(--danger); border:1px solid rgba(239, 68, 68, 0.3); background:#fff;">
+            Clear
+          </button>
+          <button class="modal-close" onclick="closeLogsModal()">&times;</button>
+        </div>
+      </div>
+
+      <div class="log-console" id="LogConsoleBox">Loading system logs...</div>
+    </div>
+  </div>
+
   <script>
     let currentFilter = 'all';
     let searchQuery = '';
@@ -1105,6 +1314,10 @@
     let currentPage = 1;
     let pageSize = 50;
     let totalMessagesCount = 0;
+    let currentView = 'grouped'; // 'grouped' (default) or 'all'
+    let cachedOrders = [];
+    let cachedMessages = [];
+    let logsAutoRefreshInterval = null;
 
     // PIN Protection (Default: auric2026 or from server)
     function checkAuth() {
@@ -1199,8 +1412,165 @@
       resend: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>`
     };
 
-    // Load Messages Table
-    async function loadMessages() {
+    // Switch between Grouped Customers view and Raw Message logs
+    function switchView(mode) {
+      currentView = mode;
+      currentPage = 1;
+
+      const btnGrouped = document.getElementById('ViewBtnGrouped');
+      const btnAll = document.getElementById('ViewBtnAll');
+      const headerRow = document.getElementById('TableHeaderRow');
+
+      if (mode === 'grouped') {
+        btnGrouped.style.background = 'var(--primary)';
+        btnGrouped.style.color = '#fff';
+        btnAll.style.background = 'transparent';
+        btnAll.style.color = 'var(--text-muted)';
+        headerRow.innerHTML = `
+          <th>Date & Time (IST)</th>
+          <th>Order #</th>
+          <th>Customer</th>
+          <th>Phone Number</th>
+          <th>4-Step Journey Progress</th>
+          <th>Overall Status</th>
+          <th>Action</th>
+        `;
+      } else {
+        btnAll.style.background = 'var(--primary)';
+        btnAll.style.color = '#fff';
+        btnGrouped.style.background = 'transparent';
+        btnGrouped.style.color = 'var(--text-muted)';
+        headerRow.innerHTML = `
+          <th>Date & Time (IST)</th>
+          <th>Order #</th>
+          <th>Customer</th>
+          <th>Phone Number</th>
+          <th>Journey Stage</th>
+          <th>Delivery Status & Reason</th>
+          <th>Action</th>
+        `;
+      }
+
+      loadData();
+    }
+
+    // Load Table Data (Grouped Orders or Raw Messages)
+    async function loadData() {
+      if (currentView === 'grouped') {
+        await loadGroupedOrders();
+      } else {
+        await loadRawMessages();
+      }
+    }
+
+    // Load Unified Customer Records (1 Row per Order)
+    async function loadGroupedOrders() {
+      try {
+        const offset = (currentPage - 1) * pageSize;
+        const url = `/api/dashboard/orders?status=${currentFilter}&search=${encodeURIComponent(searchQuery)}&limit=${pageSize}&offset=${offset}`;
+        const res = await fetch(url, { headers: getAuthHeaders() });
+        const data = await res.json();
+        const tbody = document.getElementById('MessagesTableBody');
+
+        cachedOrders = data.orders || [];
+        totalMessagesCount = data.total || 0;
+        updatePaginationUI();
+
+        if (!cachedOrders || cachedOrders.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="7" class="empty-state">
+                <div class="empty-icon-wrap">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle></svg>
+                </div>
+                <div style="font-weight:600; font-size:15px; margin-bottom:4px;">No customer orders found</div>
+                <div>No orders match your filter or search criteria.</div>
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        tbody.innerHTML = cachedOrders.map(ord => {
+          const dateStr = formatIST(ord.latestTimestamp);
+          const cleanPhone = ord.phone ? ord.phone.replace(/\D/g, '') : '';
+          const waChatLink = cleanPhone ? `https://wa.me/${cleanPhone}` : '#';
+
+          // 4 Steps Badges
+          const s1 = ord.stages.order_confirmed;
+          const s2 = ord.stages.milling_started;
+          const s3 = ord.stages.order_shipped;
+          const s4 = ord.stages.order_feedback;
+
+          const dot1 = s1 ? `<span class="step-dot completed" title="Order Confirmed: ${s1.status}">1. Confirmed ✔️</span>` : `<span class="step-dot" title="Awaiting Order Confirmation">1. Confirmed</span>`;
+          const dot2 = s2 ? (s2.status === 'scheduled' ? `<span class="step-dot scheduled" title="Milling Scheduled for Next Day 11 AM">2. Milling 🕒</span>` : `<span class="step-dot completed" title="Fresh Milling: ${s2.status}">2. Milling ✔️</span>`) : `<span class="step-dot" title="Milling Not Scheduled">2. Milling</span>`;
+          const dot3 = s3 ? `<span class="step-dot completed" title="Order Shipped: ${s3.status}">3. Shipped 🚚</span>` : `<span class="step-dot" title="Awaiting Dispatch">3. Shipped</span>`;
+          const dot4 = s4 ? `<span class="step-dot completed" title="Feedback & Review: ${s4.status}">4. Review ⭐</span>` : `<span class="step-dot" title="Awaiting Delivery">4. Review</span>`;
+
+          let statusBadge = '';
+          if (ord.overallStatus === 'delivered') {
+            statusBadge = `<span class="status-badge status-delivered">${ICONS.delivered} Delivered</span>`;
+          } else if (ord.overallStatus === 'read') {
+            statusBadge = `<span class="status-badge status-read">${ICONS.read} Read</span>`;
+          } else if (ord.overallStatus === 'scheduled') {
+            statusBadge = `<span class="status-badge status-scheduled">${ICONS.scheduled} Milling Queued</span>`;
+          } else if (ord.overallStatus === 'failed') {
+            statusBadge = `<span class="status-badge status-failed">${ICONS.failed} Failed</span>`;
+          } else {
+            statusBadge = `<span class="status-badge status-sent">${ICONS.sent} Active</span>`;
+          }
+
+          const lookupKey = ord.orderId !== '-' ? ord.orderId : ord.phone;
+
+          return `
+            <tr class="clickable-row" onclick="openCustomerModal('${escapeHtml(lookupKey)}')">
+              <td style="color:#64748b; font-size:12.5px; white-space:nowrap;">${dateStr}</td>
+              <td><span class="order-badge">${escapeHtml(ord.orderId || '-')}</span></td>
+              <td style="font-weight:700; color:#1e293b;">
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <span>${escapeHtml(ord.customerName || 'Customer')}</span>
+                  <span style="font-size:11px; color:var(--primary); font-weight:600;">(${ord.messages.length} msgs)</span>
+                </div>
+              </td>
+              <td>
+                <div class="phone-cell" onclick="event.stopPropagation();">
+                  <span>${escapeHtml(ord.phone || 'None')}</span>
+                  ${cleanPhone ? `<a href="${waChatLink}" target="_blank" class="wa-link" title="Open WhatsApp Chat">${ICONS.chat}</a>` : ''}
+                </div>
+              </td>
+              <td>
+                <div class="journey-mini-steps">
+                  ${dot1}
+                  ${dot2}
+                  ${dot3}
+                  ${dot4}
+                </div>
+              </td>
+              <td>${statusBadge}</td>
+              <td>
+                <div style="display:flex; gap:6px;" onclick="event.stopPropagation();">
+                  <button class="btn-view-details" onclick="openCustomerModal('${escapeHtml(lookupKey)}')">
+                    <svg style="width:14px; height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    View Details
+                  </button>
+                  ${cleanPhone ? `
+                    <a href="${waChatLink}" target="_blank" class="btn-table-action" style="text-decoration:none;" title="Chat on WhatsApp">
+                      ${ICONS.chat} Chat
+                    </a>
+                  ` : ''}
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+      } catch (err) {
+        console.error('Error loading grouped orders:', err);
+      }
+    }
+
+    // Load Raw Individual Messages Table
+    async function loadRawMessages() {
       try {
         const offset = (currentPage - 1) * pageSize;
         const url = `/api/dashboard/messages?status=${currentFilter}&search=${encodeURIComponent(searchQuery)}&limit=${pageSize}&offset=${offset}`;
@@ -1208,10 +1578,11 @@
         const data = await res.json();
         const tbody = document.getElementById('MessagesTableBody');
 
+        cachedMessages = data.messages || [];
         totalMessagesCount = data.total || 0;
         updatePaginationUI();
 
-        if (!data.messages || data.messages.length === 0) {
+        if (!cachedMessages || cachedMessages.length === 0) {
           tbody.innerHTML = `
             <tr>
               <td colspan="7" class="empty-state">
@@ -1226,7 +1597,7 @@
           return;
         }
 
-        tbody.innerHTML = data.messages.map(m => {
+        tbody.innerHTML = cachedMessages.map(m => {
           const dateStr = formatIST(m.createdAt || m.sentAt);
           
           let statusBadge = '';
@@ -1242,7 +1613,7 @@
           } else if (m.status === 'failed') {
             statusBadge = `<span class="status-badge status-failed">${ICONS.failed} Undelivered</span>`;
           } else if (m.status === 'skipped') {
-            statusBadge = `<span class="status-badge status-skipped">${ICONS.skipped} Skipped (No Phone)</span>`;
+            statusBadge = `<span class="status-badge status-skipped">${ICONS.skipped} Skipped</span>`;
           }
 
           let failureHtml = '';
@@ -1291,7 +1662,259 @@
         }).join('');
 
       } catch (err) {
-        console.error('Error loading messages:', err);
+        console.error('Error loading raw messages:', err);
+      }
+    }
+
+    // Open Unified Customer Detail Modal (Shows all 4 stages, timeline & WhatsApp chat)
+    function openCustomerModal(key) {
+      const ord = cachedOrders.find(o => o.orderId === key || o.phone === key || o.customerName === key);
+      if (!ord) return;
+
+      const cleanPhone = ord.phone ? ord.phone.replace(/\D/g, '') : '';
+      const waChatLink = cleanPhone ? `https://wa.me/${cleanPhone}` : '#';
+
+      // 4 Stages Data
+      const stagesConfig = [
+        {
+          key: 'order_confirmed',
+          title: '1. Order Confirmation',
+          icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"></rect><polyline points="3 9 12 15 21 9"></polyline></svg>`,
+          template: 'thank_you_new',
+          desc: 'Sent immediately on checkout'
+        },
+        {
+          key: 'milling_started',
+          title: '2. Fresh Milling Drip',
+          icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`,
+          template: 'fresh_milling_started_new',
+          desc: 'Scheduled next day 11:00 AM IST'
+        },
+        {
+          key: 'order_shipped',
+          title: '3. Order Shipped',
+          icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>`,
+          template: 'order_shipped_new',
+          desc: 'Triggered when parcel is dispatched'
+        },
+        {
+          key: 'order_feedback',
+          title: '4. Delivered & Feedback',
+          icon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`,
+          template: 'feedback_new',
+          desc: 'Delivered review & Google rating link'
+        }
+      ];
+
+      const stageCardsHtml = stagesConfig.map(cfg => {
+        const item = ord.stages[cfg.key];
+        let statusBadge = '<span style="font-size:11.5px; padding:3px 8px; border-radius:12px; background:#f1f5f9; color:#64748b; font-weight:600;">Not Triggered Yet</span>';
+        let timeStr = '-';
+        let actionBtn = '';
+
+        if (item) {
+          timeStr = formatIST(item.createdAt || item.scheduledAt || item.sentAt);
+          if (item.status === 'delivered') {
+            statusBadge = `<span class="status-badge status-delivered">${ICONS.delivered} Delivered</span>`;
+          } else if (item.status === 'read') {
+            statusBadge = `<span class="status-badge status-read">${ICONS.read} Read</span>`;
+          } else if (item.status === 'scheduled') {
+            const schedDate = item.scheduledAt ? formatIST(item.scheduledAt) : 'Next Day 11 AM';
+            statusBadge = `<span class="status-badge status-scheduled">${ICONS.scheduled} Queued for ${schedDate}</span>`;
+          } else if (item.status === 'failed') {
+            statusBadge = `<span class="status-badge status-failed">${ICONS.failed} Failed</span>`;
+          } else {
+            statusBadge = `<span class="status-badge status-sent">${ICONS.sent} Sent</span>`;
+          }
+
+          if (item.id) {
+            actionBtn = `<button class="btn-table-action" onclick="resendMessage('${item.id}')" style="margin-top:10px;">${ICONS.resend} Resend This Stage</button>`;
+          }
+        }
+
+        return `
+          <div class="customer-stage-card">
+            <div class="stage-card-header">
+              <div class="stage-card-title">
+                ${cfg.icon}
+                <span>${cfg.title}</span>
+              </div>
+              <div>${statusBadge}</div>
+            </div>
+            <div style="font-size:12px; color:var(--text-muted); margin-bottom:4px;">${cfg.desc}</div>
+            <div style="font-size:12px; color:#475569; font-weight:600;">Template: <code>${cfg.template}</code></div>
+            <div style="font-size:12px; color:#64748b; margin-top:4px;">Time: <strong>${timeStr}</strong></div>
+            ${item && item.failureReason ? `<div class="reason-box" style="margin-top:6px;">${ICONS.alert} ${escapeHtml(item.failureReason)}</div>` : ''}
+            ${actionBtn}
+          </div>
+        `;
+      }).join('');
+
+      // Audit logs for this customer
+      const messagesRowsHtml = ord.messages.map(m => {
+        const dateStr = formatIST(m.createdAt || m.sentAt);
+        let sBadge = `<span style="font-weight:600; font-size:12px;">${escapeHtml(m.status)}</span>`;
+        if (m.status === 'delivered') sBadge = `<span class="status-badge status-delivered">${ICONS.delivered} Delivered</span>`;
+        else if (m.status === 'read') sBadge = `<span class="status-badge status-read">${ICONS.read} Read</span>`;
+        else if (m.status === 'failed') sBadge = `<span class="status-badge status-failed">${ICONS.failed} Failed</span>`;
+
+        return `
+          <tr>
+            <td style="font-size:12px; color:#64748b;">${dateStr}</td>
+            <td style="font-size:12.5px; font-weight:600;">${escapeHtml(m.stageLabel || m.stage)}</td>
+            <td style="font-size:12px; font-family:monospace; color:#475569;">${escapeHtml(m.templateName || '-')}</td>
+            <td>${sBadge}</td>
+            <td style="font-size:11.5px; font-family:monospace; color:#64748b;">${escapeHtml(m.watiMessageId || '-')}</td>
+            <td>
+              <button class="btn-table-action" onclick="resendMessage('${m.id}')" title="Resend">${ICONS.resend} Resend</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      const content = `
+        <!-- Customer Profile Hero -->
+        <div class="customer-hero">
+          <div>
+            <div style="font-size:22px; font-weight:800; display:flex; align-items:center; gap:10px;">
+              <span>${escapeHtml(ord.customerName)}</span>
+              <span class="order-badge" style="background:#fff; color:#221509; border:none; font-size:14px;">${escapeHtml(ord.orderId)}</span>
+            </div>
+            <div style="font-size:13.5px; color:#e2d4c7; margin-top:6px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+              <span>📱 <strong>${escapeHtml(ord.phone || 'No phone')}</strong></span>
+              <span>🕒 Latest Activity: <strong>${formatIST(ord.latestTimestamp)}</strong></span>
+            </div>
+          </div>
+          <div style="display:flex; gap:10px; align-items:center;">
+            ${cleanPhone ? `
+              <a href="${waChatLink}" target="_blank" class="btn btn-secondary" style="background:rgba(37,211,102,0.2); border-color:#25d366; color:#fff; text-decoration:none;">
+                💬 Open WhatsApp Chat
+              </a>
+            ` : ''}
+          </div>
+        </div>
+
+        <!-- 4-Stage WhatsApp Journey Cards -->
+        <h4 style="font-size:14.5px; font-weight:700; color:var(--text-main); margin-bottom:12px; display:flex; align-items:center; gap:6px;">
+          <svg style="width:16px; height:16px; color:var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+          4-Stage Customer WhatsApp Journey
+        </h4>
+        <div class="customer-stages-grid">
+          ${stageCardsHtml}
+        </div>
+
+        <!-- Detailed Message History for this Customer -->
+        <h4 style="font-size:14.5px; font-weight:700; color:var(--text-main); margin-bottom:10px; display:flex; align-items:center; gap:6px;">
+          <svg style="width:16px; height:16px; color:var(--primary);" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line></svg>
+          Complete Message History (${ord.messages.length} Dispatched)
+        </h4>
+        <div style="border:1px solid var(--border); border-radius:10px; overflow:hidden; margin-bottom:10px;">
+          <table style="width:100%; border-collapse:collapse;">
+            <thead style="background:#f8fafc;">
+              <tr>
+                <th style="padding:10px 14px; font-size:11px;">Time (IST)</th>
+                <th style="padding:10px 14px; font-size:11px;">Stage</th>
+                <th style="padding:10px 14px; font-size:11px;">Template</th>
+                <th style="padding:10px 14px; font-size:11px;">Delivery Status</th>
+                <th style="padding:10px 14px; font-size:11px;">Message ID</th>
+                <th style="padding:10px 14px; font-size:11px;">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${messagesRowsHtml}
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      document.getElementById('CustomerModalContent').innerHTML = content;
+      document.getElementById('CustomerModal').classList.add('open');
+    }
+
+    function closeCustomerModal() {
+      document.getElementById('CustomerModal').classList.remove('open');
+    }
+
+    // Live Server System Logs Modal
+    function openLogsModal() {
+      document.getElementById('LogsModal').classList.add('open');
+      loadLogs();
+      startLogsAutoRefresh();
+    }
+
+    function closeLogsModal() {
+      document.getElementById('LogsModal').classList.remove('open');
+      clearInterval(logsAutoRefreshInterval);
+    }
+
+    async function loadLogs() {
+      try {
+        const box = document.getElementById('LogConsoleBox');
+        const res = await fetch('/api/dashboard/logs', { headers: getAuthHeaders() });
+        const data = await res.json();
+
+        if (!data.logs || data.logs.length === 0) {
+          box.innerHTML = '<div style="color:#64748b; padding:20px; text-align:center;">No recent server logs. Logs will appear when events occur.</div>';
+          return;
+        }
+
+        box.innerHTML = data.logs.map(entry => {
+          const timeStr = new Date(entry.time).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata' });
+          let msg = escapeHtml(entry.message);
+
+          // Color-code key events
+          if (msg.includes('ERROR') || msg.includes('Failed')) {
+            msg = `<span style="color:#f87171; font-weight:700;">${msg}</span>`;
+          } else if (msg.includes('Webhook') || msg.includes('Shopify')) {
+            msg = `<span style="color:#4ade80;">${msg}</span>`;
+          } else if (msg.includes('CONFIRMED')) {
+            msg = `<span style="color:#38bdf8;">${msg}</span>`;
+          } else if (msg.includes('SHIPPED')) {
+            msg = `<span style="color:#c084fc;">${msg}</span>`;
+          } else if (msg.includes('FEEDBACK')) {
+            msg = `<span style="color:#fbbf24;">${msg}</span>`;
+          } else if (msg.includes('SCHEDULED')) {
+            msg = `<span style="color:#818cf8;">${msg}</span>`;
+          } else if (msg.includes('DEDUP') || msg.includes('PAUSED')) {
+            msg = `<span style="color:#94a3b8;">${msg}</span>`;
+          }
+
+          return `<div class="log-line"><span class="log-time">[${timeStr}]</span>${msg}</div>`;
+        }).join('');
+
+      } catch (err) {
+        console.error('Error loading logs:', err);
+      }
+    }
+
+    function toggleLogsAutoRefresh() {
+      const isChecked = document.getElementById('LogsAutoRefresh').checked;
+      if (isChecked) {
+        startLogsAutoRefresh();
+      } else {
+        clearInterval(logsAutoRefreshInterval);
+      }
+    }
+
+    function startLogsAutoRefresh() {
+      clearInterval(logsAutoRefreshInterval);
+      logsAutoRefreshInterval = setInterval(loadLogs, 3000);
+    }
+
+    async function clearLogs() {
+      if (!confirm('Clear recent server logs buffer?')) return;
+      await fetch('/api/dashboard/logs/clear', { method: 'POST', headers: getAuthHeaders() });
+      loadLogs();
+    }
+
+    async function copyLogs() {
+      const box = document.getElementById('LogConsoleBox');
+      const text = box.innerText || '';
+      try {
+        await navigator.clipboard.writeText(text);
+        alert('Console logs copied to clipboard!');
+      } catch (err) {
+        alert('Failed to copy: ' + err.message);
       }
     }
 
@@ -1319,7 +1942,7 @@
       currentPage = 1;
       document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
       el.classList.add('active');
-      loadMessages();
+      loadData();
     }
 
     function debounceSearch() {
@@ -1327,7 +1950,7 @@
       searchTimeout = setTimeout(() => {
         searchQuery = document.getElementById('SearchInput').value;
         currentPage = 1;
-        loadMessages();
+        loadData();
       }, 300);
     }
 
@@ -1343,7 +1966,7 @@
       const start = totalMessagesCount === 0 ? 0 : (currentPage - 1) * pageSize + 1;
       const end = Math.min(currentPage * pageSize, totalMessagesCount);
 
-      info.textContent = `Showing ${start} to ${end} of ${totalMessagesCount} messages`;
+      info.textContent = `Showing ${start} to ${end} of ${totalMessagesCount} records`;
       pageSpan.textContent = `${currentPage} / ${totalPages}`;
 
       prevBtn.disabled = currentPage <= 1;
@@ -1358,7 +1981,7 @@
     function prevPage() {
       if (currentPage > 1) {
         currentPage--;
-        loadMessages();
+        loadData();
       }
     }
 
@@ -1366,14 +1989,14 @@
       const totalPages = Math.ceil(totalMessagesCount / pageSize) || 1;
       if (currentPage < totalPages) {
         currentPage++;
-        loadMessages();
+        loadData();
       }
     }
 
     function changePageSize(val) {
       pageSize = parseInt(val, 10) || 50;
       currentPage = 1;
-      loadMessages();
+      loadData();
     }
 
     async function syncWatiHistory() {
@@ -1392,7 +2015,7 @@
         });
         const data = await res.json();
         if (data.status === 'success') {
-          alert(`Sync complete! Added ${data.addedCount} new records. Total messages: ${data.totalMessages}.`);
+          alert(`Sync complete! Added ${data.addedCount} new records. Total in database: ${data.totalMessages}.`);
           currentPage = 1;
           loadDashboard();
         } else {
@@ -1513,7 +2136,7 @@
 
     function loadDashboard() {
       loadStats();
-      loadMessages();
+      loadData();
     }
 
     // Startup

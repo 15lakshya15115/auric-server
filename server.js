@@ -17,13 +17,13 @@ app.use(express.static(path.join(__dirname, 'public')));
 initScheduler();
 
 // ==========================================
-// In-Memory Circular Log Buffer (100 items)
+// In-Memory Circular Log Buffer (300 items)
 // ==========================================
 const recentLogs = [];
 function addLog(msg) {
   const entry = { time: new Date().toISOString(), message: msg };
   recentLogs.unshift(entry);
-  if (recentLogs.length > 100) recentLogs.pop();
+  if (recentLogs.length > 300) recentLogs.pop();
   console.log(`[${entry.time}] ${msg}`);
 }
 
@@ -104,6 +104,29 @@ app.get('/api/dashboard/messages', authMiddleware, (req, res) => {
     offset: offset ? parseInt(offset, 10) : 0
   });
   res.json(data);
+});
+
+// Unified Grouped Orders/Customers API (1 row per order)
+app.get('/api/dashboard/orders', authMiddleware, (req, res) => {
+  const { status, search, limit, offset } = req.query;
+  const data = db.getGroupedOrders({
+    status,
+    search,
+    limit: limit ? parseInt(limit, 10) : 50,
+    offset: offset ? parseInt(offset, 10) : 0
+  });
+  res.json(data);
+});
+
+// Live Server System Logs API
+app.get('/api/dashboard/logs', authMiddleware, (req, res) => {
+  res.json({ total: recentLogs.length, logs: recentLogs });
+});
+
+app.post('/api/dashboard/logs/clear', authMiddleware, (req, res) => {
+  recentLogs.length = 0;
+  addLog('[Logs] System logs buffer cleared from Dashboard.');
+  res.json({ status: 'success' });
 });
 
 app.post('/api/dashboard/settings', authMiddleware, (req, res) => {

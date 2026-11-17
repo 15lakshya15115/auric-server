@@ -627,16 +627,6 @@ app.listen(PORT, () => {
   console.log(`🔑 PIN:          ${DASHBOARD_PIN}`);
   console.log(`====================================================`);
 
-  // Background Auto-sync historical messages on startup if database is empty
-  setTimeout(async () => {
-    try {
-      const existing = db.readMessages();
-      if (!existing || existing.length === 0) {
-        console.log('[Startup Auto-Sync] Messages database is empty. Auto-syncing past history from WATI...');
-        await syncAllHistoricalMessages({ concurrency: 10 });
-      }
-    } catch (err) {
-      console.warn('[Startup Auto-Sync Warning]:', err.message);
-    }
-  }, 2500);
+  // Manual sync only: Do not auto-sync on cold startup to protect WATI monthly API call quota
+
 });

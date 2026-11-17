@@ -31,7 +31,10 @@ function parseFailureReason(errorMsg, rawPhone = '') {
   if (msg.includes('invalid phone') || msg.includes('not a valid whatsapp') || msg.includes('not registered') || msg.includes('valid whatsapp')) {
     return 'Phone number not registered on WhatsApp';
   }
-  if (msg.includes('balance') || msg.includes('insufficient') || msg.includes('credit') || msg.includes('quota') || msg.includes('payment')) {
+  if (msg.includes('429') || msg.includes('usage limit') || msg.includes('too many requests') || msg.includes('limit exceeded')) {
+    return 'WATI monthly API call quota exceeded (10,000 limit reached). Upgrade to Pro Plan needed.';
+  }
+  if (msg.includes('balance') || msg.includes('insufficient') || msg.includes('credit') || msg.includes('payment')) {
     return 'WATI balance / conversation credits exhausted';
   }
   if (msg.includes('template') || msg.includes('parameter') || msg.includes('rejected')) {
